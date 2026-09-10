@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Billing History - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">
+          <i class="fa fa-file-invoice me-2"></i>Billing History
+        </h2>
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-primary">
+          <i class="fa fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-history me-2"></i>Payment History
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if billing_records %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Payment Method</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for record in billing_records %}
+                    <tr>
+                      <td>
+                        <span class="fw-bold text-primary">{{ record.invoice_number }}</span>
+                      </td>
+                      <td>
+                        <div>
+                          <div class="fw-bold">{{ record.description or 'Subscription Payment' }}</div>
+                          <small class="text-muted">{{ record.subscription.plan.name }}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="fw-bold text-success">₹{{ "%.2f"|format(record.amount) }}</span>
+                      </td>
+                      <td>
+                        {% if record.payment_method %}
+                          <div class="d-flex align-items-center">
+                            <i class="fa fa-credit-card me-2 text-muted"></i>
+                            <div>
+                              <div class="fw-bold">{{ record.payment_method.card_type.title() }}</div>
+                              <small class="text-muted">**** {{ record.payment_method.last_four_digits }}</small>
+                            </div>
+                          </div>
+                        {% else %}
+                          <span class="text-muted">N/A</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <span class="badge {% if record.status == 'paid' %}bg-success{% elif record.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                          {{ record.status.title() }}
+                        </span>
+                      </td>
+                      <td>
+                        <div>
+                          <div class="fw-bold">{{ record.payment_date.strftime('%Y-%m-%d') }}</div>
+                          <small class="text-muted">{{ record.payment_date.strftime('%H:%M') }}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <button class="btn btn-sm btn-outline-primary" onclick="downloadInvoice('{{ record.invoice_number }}')">
+                            <i class="fa fa-download me-1"></i>Download
+                          </button>
+                          <button class="btn btn-sm btn-outline-info" onclick="viewInvoice('{{ record.invoice_number }}')">
+                            <i class="fa fa-eye me-1"></i>View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="fa fa-file-invoice fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No billing history found</h5>
+              <p class="text-muted">Your payment history will appear here once you make your first payment</p>
+              <a href="{{ url_for('list_plans') }}" class="btn btn-primary">
+                <i class="fa fa-search me-2"></i>Browse Plans
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function downloadInvoice(invoiceNumber) {
+  // In a real application, this would generate and download a PDF invoice
+  alert('Downloading invoice ' + invoiceNumber + '...');
+}
+
+function viewInvoice(invoiceNumber) {
+  // In a real application, this would open a modal or new page with invoice details
+  alert('Viewing invoice ' + invoiceNumber + '...');
+}
+</script>
+{% endblock %}

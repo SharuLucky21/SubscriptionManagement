@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Discount - SubManage{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-10 col-lg-8">
+    <div class="card shadow-lg border-0 mt-4">
+      <div class="card-header bg-warning text-dark">
+        <h4 class="mb-0">
+          <i class="fa fa-edit me-2"></i>Edit Discount: {{ discount.name }}
+        </h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="name" class="form-label">
+                  <i class="fa fa-tag me-2"></i>Discount Name
+                </label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ discount.name }}" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="code" class="form-label">
+                  <i class="fa fa-code me-2"></i>Discount Code
+                </label>
+                <input type="text" class="form-control" id="code" name="code" value="{{ discount.code }}" required style="text-transform: uppercase;">
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discount_type" class="form-label">
+                  <i class="fa fa-calculator me-2"></i>Discount Type
+                </label>
+                <select class="form-select" id="discount_type" name="discount_type" required>
+                  <option value="percentage" {% if discount.discount_type == 'percentage' %}selected{% endif %}>Percentage (%)</option>
+                  <option value="fixed" {% if discount.discount_type == 'fixed' %}selected{% endif %}>Fixed Amount (₹)</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="discount_value" class="form-label">
+                  <i class="fa fa-rupee-sign me-2"></i>Discount Value
+                </label>
+                <input type="number" class="form-control" id="discount_value" name="discount_value" step="0.01" value="{{ discount.discount_value }}" required min="0">
+                <div class="form-text" id="discount_help">Enter the discount amount</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="min_amount" class="form-label">
+                  <i class="fa fa-arrow-up me-2"></i>Minimum Order Amount
+                </label>
+                <input type="number" class="form-control" id="min_amount" name="min_amount" step="0.01" min="0" value="{{ discount.min_amount }}">
+                <div class="form-text">Minimum amount required to use this discount</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="max_discount" class="form-label">
+                  <i class="fa fa-arrow-down me-2"></i>Maximum Discount Amount
+                </label>
+                <input type="number" class="form-control" id="max_discount" name="max_discount" step="0.01" min="0" value="{{ discount.max_discount or '' }}">
+                <div class="form-text">Maximum discount amount (leave empty for no limit)</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="valid_from" class="form-label">
+                  <i class="fa fa-calendar-alt me-2"></i>Valid From
+                </label>
+                <input type="date" class="form-control" id="valid_from" name="valid_from" value="{{ discount.valid_from.strftime('%Y-%m-%d') }}" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="valid_until" class="form-label">
+                  <i class="fa fa-calendar-alt me-2"></i>Valid Until
+                </label>
+                <input type="date" class="form-control" id="valid_until" name="valid_until" value="{{ discount.valid_until.strftime('%Y-%m-%d') }}" required>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="usage_limit" class="form-label">
+                  <i class="fa fa-users me-2"></i>Usage Limit
+                </label>
+                <input type="number" class="form-control" id="usage_limit" name="usage_limit" min="1" value="{{ discount.usage_limit or '' }}">
+                <div class="form-text">Maximum number of times this discount can be used (leave empty for unlimited)</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">
+                  <i class="fa fa-chart-line me-2"></i>Current Usage
+                </label>
+                <div class="form-control-plaintext">
+                  <span class="badge bg-info">{{ discount.used_count }}/{{ discount.usage_limit if discount.usage_limit else '∞' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label for="description" class="form-label">
+              <i class="fa fa-align-left me-2"></i>Description
+            </label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ discount.description }}</textarea>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+              <i class="fa fa-save me-2"></i>Update Discount
+            </button>
+            <a href="{{ url_for('list_discounts') }}" class="btn btn-outline-secondary">
+              <i class="fa fa-arrow-left me-2"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('discount_type').addEventListener('change', function() {
+    const helpText = document.getElementById('discount_help');
+    const valueInput = document.getElementById('discount_value');
+    
+    if (this.value === 'percentage') {
+        helpText.textContent = 'Enter percentage (e.g., 20 for 20%)';
+        valueInput.max = 100;
+    } else if (this.value === 'fixed') {
+        helpText.textContent = 'Enter amount in rupees (e.g., 100 for ₹100)';
+        valueInput.removeAttribute('max');
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const discountType = document.getElementById('discount_type').value;
+    const helpText = document.getElementById('discount_help');
+    
+    if (discountType === 'percentage') {
+        helpText.textContent = 'Enter percentage (e.g., 20 for 20%)';
+    } else if (discountType === 'fixed') {
+        helpText.textContent = 'Enter amount in rupees (e.g., 100 for ₹100)';
+    }
+});
+</script>
+{% endblock %}

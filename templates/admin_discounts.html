@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Discount Management - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">
+          <i class="fa fa-percentage me-2"></i>Discount Management
+        </h2>
+        <a href="{{ url_for('create_discount') }}" class="btn btn-primary">
+          <i class="fa fa-plus me-2"></i>Create New Discount
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-tags me-2"></i>Active Discounts
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if discounts %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Valid Period</th>
+                    <th>Usage</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for discount in discounts %}
+                    <tr>
+                      <td>
+                        <div class="fw-bold">{{ discount.name }}</div>
+                        <small class="text-muted">{{ discount.description }}</small>
+                      </td>
+                      <td>
+                        <span class="badge bg-info">{{ discount.code }}</span>
+                      </td>
+                      <td>
+                        <span class="badge {% if discount.discount_type == 'percentage' %}bg-success{% else %}bg-warning{% endif %}">
+                          {{ discount.discount_type.title() }}
+                        </span>
+                      </td>
+                      <td class="fw-bold">
+                        {% if discount.discount_type == 'percentage' %}
+                          {{ discount.discount_value }}%
+                        {% else %}
+                          ₹{{ discount.discount_value }}
+                        {% endif %}
+                      </td>
+                      <td>
+                        <small>
+                          {{ discount.valid_from.strftime('%Y-%m-%d') }} to<br>
+                          {{ discount.valid_until.strftime('%Y-%m-%d') }}
+                        </small>
+                      </td>
+                      <td>
+                        <div class="progress" style="height: 20px;">
+                          {% set usage_percent = (discount.used_count / discount.usage_limit * 100) if discount.usage_limit else 0 %}
+                          <div class="progress-bar" role="progressbar" style="width: {{ usage_percent }}%">
+                            {{ discount.used_count }}/{{ discount.usage_limit if discount.usage_limit else '∞' }}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge {% if discount.active %}bg-success{% else %}bg-secondary{% endif %}">
+                          {% if discount.active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <a href="{{ url_for('edit_discount', discount_id=discount.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-edit"></i>
+                          </a>
+                          <form style="display:inline" method="post" action="{{ url_for('toggle_discount', discount_id=discount.id) }}">
+                            <button class="btn btn-sm {% if discount.active %}btn-outline-warning{% else %}btn-outline-success{% endif %}" 
+                                    onclick="return confirm('Are you sure you want to {% if discount.active %}deactivate{% else %}activate{% endif %} this discount?')">
+                              <i class="fa fa-{% if discount.active %}pause{% else %}play{% endif %}"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="fa fa-percentage fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No discounts created yet</h5>
+              <p class="text-muted">Create your first discount to start offering promotions</p>
+              <a href="{{ url_for('create_discount') }}" class="btn btn-primary">
+                <i class="fa fa-plus me-2"></i>Create First Discount
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

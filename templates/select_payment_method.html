@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Select Payment Method - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fa fa-credit-card me-2"></i>Select Payment Method
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <!-- Plan Summary -->
+          <div class="card bg-light mb-4">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="fa fa-box me-2"></i>{{ plan.name }}
+              </h5>
+              <p class="card-text">{{ plan.description }}</p>
+              <div class="row">
+                <div class="col-md-6">
+                  <small class="text-muted">Storage: {{ plan.quota_gb }} GB</small>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">Price: ₹{{ "%.2f"|format(plan.price) }}</small>
+                </div>
+              </div>
+              {% if discount_amount > 0 %}
+                <div class="mt-2">
+                  <span class="badge bg-success">Discount Applied: ₹{{ "%.2f"|format(discount_amount) }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Payment Summary -->
+          <div class="card bg-info text-white mb-4">
+            <div class="card-body">
+              <h6 class="card-title">
+                <i class="fa fa-calculator me-2"></i>Payment Summary
+              </h6>
+              <div class="d-flex justify-content-between">
+                <span>Plan Price:</span>
+                <span>₹{{ "%.2f"|format(plan.price) }}</span>
+              </div>
+              {% if discount_amount > 0 %}
+                <div class="d-flex justify-content-between">
+                  <span>Discount ({{ discount_code }}):</span>
+                  <span>-₹{{ "%.2f"|format(discount_amount) }}</span>
+                </div>
+              {% endif %}
+              <hr class="my-2">
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Total Amount:</span>
+                <span>₹{{ "%.2f"|format(final_amount) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Payment Method Selection -->
+          <form method="post" action="{{ url_for('subscribe', plan_id=plan.id) }}">
+            <input type="hidden" name="discount_code" value="{{ discount_code }}">
+            
+            <h6 class="mb-3">
+              <i class="fa fa-credit-card me-2"></i>Choose Payment Method
+            </h6>
+            
+            <div class="row">
+              {% for payment in payment_methods %}
+                <div class="col-md-6 mb-3">
+                  <div class="card payment-method-card" onclick="selectPaymentMethod(event, {{ payment.id }})">
+                    <div class="card-body">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="payment_method_id" 
+                               id="payment_{{ payment.id }}" value="{{ payment.id }}" required>
+                        <label class="form-check-label w-100" for="payment_{{ payment.id }}">
+                          <div class="d-flex align-items-center">
+                            {% if payment.card_type == 'upi' %}
+                              <i class="fa fa-mobile fa-2x me-3 text-primary"></i>
+                            {% else %}
+                              <i class="fa fa-credit-card fa-2x me-3 text-primary"></i>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                              <h6 class="mb-1">{{ payment.card_type.upper() }}</h6>
+                              {% if payment.card_type == 'upi' %}
+                                <small class="text-muted">UPI ID ending in {{ payment.last_four_digits }}</small>
+                              {% else %}
+                                <small class="text-muted">**** **** **** {{ payment.last_four_digits }}</small>
+                              {% endif %}
+                              {% if payment.is_default %}
+                                <span class="badge bg-success ms-2">Default</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mt-4">
+              <button type="button" class="btn btn-primary btn-lg flex-grow-1" id="subscribeBtn" disabled>
+                <i class="fa fa-check me-2"></i>Subscribe Now - ₹{{ "%.2f"|format(final_amount) }}
+              </button>
+              <a href="{{ url_for('list_plans') }}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left me-2"></i>Back to Plans
+              </a>
+
+              <!-- Success Modal -->
+              <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                      <h5 class="modal-title"><i class="fa fa-check-circle me-2"></i>Payment Successful</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p id="paymentSuccessMsg" class="mb-0">Your payment was successful.</p>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="{{ url_for('user_dashboard') }}" class="btn btn-success">Go to Dashboard</a>
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <!-- Add New Payment Method -->
+          <div class="text-center mt-4">
+            <p class="text-muted">Don't have a payment method?</p>
+            <a href="{{ url_for('add_payment_method') }}" class="btn btn-outline-primary">
+              <i class="fa fa-plus me-2"></i>Add New Payment Method
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.payment-method-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.payment-method-card:hover {
+  border-color: #0d6efd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.payment-method-card.selected {
+  border-color: #0d6efd;
+  background-color: #f8f9ff;
+}
+
+#subscribeBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>
+
+<script>
+function selectPaymentMethod(evt, paymentId) {
+  // Remove selected class from all cards
+  document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('selected'));
+  // Add selected class to clicked card
+  evt.currentTarget.classList.add('selected');
+  // Check the radio button
+  document.getElementById('payment_' + paymentId).checked = true;
+  // Enable subscribe button
+  document.getElementById('subscribeBtn').disabled = false;
+  // Auto trigger subscribe for instant flow
+  document.getElementById('subscribeBtn').click();
+}
+
+// Enable subscribe button when any payment method is selected
+document.querySelectorAll('input[name="payment_method_id"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.getElementById('subscribeBtn').disabled = false;
+  });
+});
+
+// AJAX subscribe and redirect with popup
+const subscribeBtn = document.getElementById('subscribeBtn');
+if (subscribeBtn) {
+  subscribeBtn.addEventListener('click', async function() {
+    const form = this.closest('form');
+    if (!form) return;
+    const formData = new FormData(form);
+    const subscribeUrl = form.getAttribute('action');
+
+    try {
+      const res = await fetch(subscribeUrl, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        const msgEl = document.getElementById('paymentSuccessMsg');
+        if (msgEl) {
+          msgEl.textContent = `Subscription successful using ${data.payment_method}. Amount: ₹${(data.final_amount || 0).toFixed(2)}`;
+        }
+        const modalEl = document.getElementById('paymentSuccessModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        // After a short delay, redirect to dashboard automatically
+        setTimeout(() => { window.location.href = '/user/dashboard'; }, 1200);
+      } else {
+        alert(data.message || 'Payment failed');
+      }
+    } catch (e) {
+      alert('Network error. Please try again.');
+    }
+  });
+}
+</script>
+{% endblock %}

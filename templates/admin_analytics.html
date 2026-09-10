@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">
+          <i class="fa fa-chart-line me-2"></i>Analytics Dashboard
+        </h2>
+        <div class="btn-group">
+          <button class="btn btn-outline-primary" onclick="refreshCharts()">
+            <i class="fa fa-refresh me-2"></i>Refresh
+          </button>
+          <a class="btn btn-outline-success" href="{{ url_for('admin_seed_analytics') }}">
+            <i class="fa fa-database me-2"></i>Seed Demo Data
+          </a>
+          <button class="btn btn-outline-secondary" onclick="exportData()">
+            <i class="fa fa-download me-2"></i>Export
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Key Metrics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="fw-bold">{{ plan_popularity|sum(attribute='count') }}</h4>
+              <p class="mb-0">Total Subscriptions</p>
+            </div>
+            <i class="fa fa-chart-line fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="fw-bold">{{ "%.1f"|format(churn_rate) }}%</h4>
+              <p class="mb-0">Churn Rate</p>
+            </div>
+            <i class="fa fa-exclamation-triangle fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="fw-bold">{{ plan_popularity|length }}</h4>
+              <p class="mb-0">Active Plans</p>
+            </div>
+            <i class="fa fa-wifi fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="fw-bold">₹{{ "%.0f"|format(revenue_data|sum(attribute='revenue')) }}</h4>
+              <p class="mb-0">Total Revenue</p>
+            </div>
+            <i class="fa fa-rupee-sign fa-2x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- Subscription Trends Chart -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-chart-area me-2"></i>Subscription Trends
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="subscriptionTrendsChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Plan Popularity Chart -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-chart-pie me-2"></i>Plan Popularity
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="planPopularityChart" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- Revenue Chart -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-chart-bar me-2"></i>Monthly Revenue
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="revenueChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Subscription Status Distribution -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-chart-pie me-2"></i>Subscription Status
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="subscriptionStatusChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- Monthly Subscription Growth -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-chart-line me-2"></i>Monthly Subscription Growth
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="subscriptionGrowthChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Subscription Duration Analysis -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="fa fa-clock me-2"></i>Subscription Duration
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="subscriptionDurationChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- AI Optimization Suggestions -->
+    <div class="col-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="fa fa-robot me-2"></i>AI Optimization Suggestions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div id="aiSuggestions">
+            <div class="text-center">
+              <i class="fa fa-spinner fa-spin fa-2x text-muted mb-3"></i>
+              <p class="text-muted">Analyzing data for suggestions...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Detailed Analytics Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">
+            <i class="fa fa-table me-2"></i>Detailed Plan Analytics
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Plan Name</th>
+                  <th>Subscriptions</th>
+                  <th>Revenue</th>
+                  <th>Avg. Price</th>
+                  <th>Performance</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for plan in plan_popularity %}
+                  <tr>
+                    <td class="fw-bold">{{ plan.name }}</td>
+                    <td>
+                      <span class="badge bg-primary">{{ plan.count }}</span>
+                    </td>
+                    <td class="fw-bold text-success">
+                      ₹{{ "%.0f"|format(plan.count * 899) }}
+                    </td>
+                    <td>₹899</td>
+                    <td>
+                      {% if plan.count > 5 %}
+                        <span class="badge bg-success">Excellent</span>
+                      {% elif plan.count > 2 %}
+                        <span class="badge bg-warning">Good</span>
+                      {% else %}
+                        <span class="badge bg-danger">Needs Attention</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <i class="fa fa-arrow-up text-success"></i>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Subscription Trends Chart
+const subscriptionCtx = document.getElementById('subscriptionTrendsChart').getContext('2d');
+fetch('/api/analytics/subscription_trends')
+  .then(response => response.json())
+  .then(data => {
+    new Chart(subscriptionCtx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: data.datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  });
+
+// Plan Popularity Chart
+const planCtx = document.getElementById('planPopularityChart').getContext('2d');
+const planData = {{ plan_popularity|tojson }};
+new Chart(planCtx, {
+  type: 'doughnut',
+  data: {
+    labels: planData.map(p => p.name),
+    datasets: [{
+      data: planData.map(p => p.count),
+      backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }
+});
+
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+fetch('/api/analytics/revenue')
+  .then(response => response.json())
+  .then(data => {
+    // Create a pleasing gradient to make the chart more vibrant
+    const revGradient = revenueCtx.createLinearGradient(0, 0, 0, 300);
+    revGradient.addColorStop(0, '#36b9cc');
+    revGradient.addColorStop(1, 'rgba(54, 185, 204, 0.15)');
+
+    new Chart(revenueCtx, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: data.data,
+          backgroundColor: revGradient,
+          borderColor: '#2c9faf',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+  });
+
+// Subscription Status Chart
+const statusCtx = document.getElementById('subscriptionStatusChart').getContext('2d');
+fetch('/api/analytics/subscription_status')
+  .then(response => response.json())
+  .then(data => {
+    new Chart(statusCtx, {
+      type: 'pie',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          data: data.data,
+          backgroundColor: ['#1cc88a', '#e74a3b', '#f6c23e', '#36b9cc']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  });
+
+// Monthly Subscription Growth Chart
+const growthCtx = document.getElementById('subscriptionGrowthChart').getContext('2d');
+fetch('/api/analytics/subscription_growth')
+  .then(response => response.json())
+  .then(data => {
+    new Chart(growthCtx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'New Subscriptions',
+          data: data.data,
+          borderColor: '#1cc88a',
+          backgroundColor: 'rgba(28, 200, 138, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  });
+
+// Subscription Duration Chart
+const durationCtx = document.getElementById('subscriptionDurationChart').getContext('2d');
+fetch('/api/analytics/subscription_duration')
+  .then(response => response.json())
+  .then(data => {
+    new Chart(durationCtx, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Subscriptions',
+          data: data.data,
+          backgroundColor: '#f6c23e'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  });
+
+// AI Suggestions
+function generateAISuggestions() {
+  const suggestions = [
+    {
+      icon: 'fa-lightbulb',
+      title: 'Popular Plan Optimization',
+      description: 'Consider increasing the price of your most popular plan by 10-15% as demand is high.',
+      priority: 'high'
+    },
+    {
+      icon: 'fa-chart-line',
+      title: 'Churn Reduction',
+      description: 'Implement a retention campaign for users on the Basic plan to reduce churn.',
+      priority: 'medium'
+    },
+    {
+      icon: 'fa-percentage',
+      title: 'Discount Strategy',
+      description: 'Create a seasonal discount for the Unlimited plan to boost adoption.',
+      priority: 'low'
+    }
+  ];
+  
+  const container = document.getElementById('aiSuggestions');
+  container.innerHTML = suggestions.map(s => `
+    <div class="alert alert-${s.priority === 'high' ? 'danger' : s.priority === 'medium' ? 'warning' : 'info'} mb-3">
+      <div class="d-flex">
+        <i class="fa ${s.icon} fa-2x me-3 mt-1"></i>
+        <div>
+          <h6 class="alert-heading">${s.title}</h6>
+          <p class="mb-0">${s.description}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Initialize AI suggestions
+setTimeout(generateAISuggestions, 2000);
+
+function refreshCharts() {
+  location.reload();
+}
+
+function exportData() {
+  // Simple CSV export functionality
+  const data = {{ plan_popularity|tojson }};
+  const csv = 'Plan Name,Subscriptions,Revenue\n' + 
+    data.map(p => `${p.name},${p.count},${p.count * 899}`).join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'analytics_export.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

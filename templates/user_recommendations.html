@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Plan Recommendations - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">
+          <i class="fa fa-lightbulb me-2"></i>Personalized Recommendations
+        </h2>
+        <a href="{{ url_for('list_plans') }}" class="btn btn-outline-primary">
+          <i class="fa fa-search me-2"></i>Browse All Plans
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  {% if current_plan %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fa fa-wifi me-2"></i>Your Current Plan
+            </h5>
+            <div class="row">
+              <div class="col-md-8">
+                <h4 class="fw-bold text-primary">{{ current_plan.name }}</h4>
+                <p class="text-muted">{{ current_plan.description }}</p>
+                <div class="d-flex gap-3">
+                  <span class="badge bg-info">
+                    <i class="fa fa-database me-1"></i>
+                    {% if current_plan.quota_gb==0 %}Unlimited{% else %}{{ current_plan.quota_gb }} GB{% endif %}
+                  </span>
+                  <span class="badge bg-success">
+                    <i class="fa fa-rupee-sign me-1"></i>₹{{ current_plan.price }}/month
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-primary">
+                  <i class="fa fa-tachometer-alt me-2"></i>Manage Plan
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  <div class="row">
+    {% for rec in recommendations %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 {% if rec.type == 'upgrade' %}border-success{% elif rec.type == 'downgrade' %}border-warning{% else %}border-info{% endif %}">
+          <div class="card-header {% if rec.type == 'upgrade' %}bg-success text-white{% elif rec.type == 'downgrade' %}bg-warning text-dark{% else %}bg-info text-white{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="fa fa-{% if rec.type == 'upgrade' %}arrow-up{% elif rec.type == 'downgrade' %}arrow-down{% else %}star{% endif %} me-2"></i>
+                {% if rec.type == 'upgrade' %}Upgrade Option{% elif rec.type == 'downgrade' %}Downgrade Option{% else %}Popular Choice{% endif %}
+              </h6>
+              {% if rec.savings %}
+                <span class="badge bg-light text-dark">Save ₹{{ rec.savings }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-body">
+            <h5 class="fw-bold text-primary">{{ rec.plan.name }}</h5>
+            <p class="text-muted">{{ rec.plan.description }}</p>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><i class="fa fa-database me-2 text-primary"></i>Data Quota:</span>
+                <span class="fw-bold">
+                  {% if rec.plan.quota_gb==0 %}Unlimited{% else %}{{ rec.plan.quota_gb }} GB{% endif %}
+                </span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span><i class="fa fa-rupee-sign me-2 text-success"></i>Price:</span>
+                <span class="fw-bold text-success">₹{{ rec.plan.price }}/month</span>
+              </div>
+            </div>
+            
+            <div class="alert alert-light mb-3">
+              <i class="fa fa-info-circle me-2"></i>{{ rec.reason }}
+            </div>
+            
+            {% if current_plan %}
+              <form method="post" action="{% if rec.type == 'upgrade' %}{{ url_for('upgrade_subscription', sub_id=current_plan.id) }}{% else %}{{ url_for('downgrade_subscription', sub_id=current_plan.id) }}{% endif %}">
+                <input type="hidden" name="new_plan_id" value="{{ rec.plan.id }}">
+                <div class="d-grid">
+                  <button class="btn {% if rec.type == 'upgrade' %}btn-success{% elif rec.type == 'downgrade' %}btn-warning{% else %}btn-info{% endif %}" 
+                          onclick="return confirm('Are you sure you want to {% if rec.type == 'upgrade' %}upgrade{% elif rec.type == 'downgrade' %}downgrade{% else %}switch{% endif %} to {{ rec.plan.name }}?')">
+                    <i class="fa fa-{% if rec.type == 'upgrade' %}arrow-up{% elif rec.type == 'downgrade' %}arrow-down{% else %}exchange-alt{% endif %} me-2"></i>
+                    {% if rec.type == 'upgrade' %}Upgrade Now{% elif rec.type == 'downgrade' %}Downgrade Now{% else %}Choose Plan{% endif %}
+                  </button>
+                </div>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('subscribe', plan_id=rec.plan.id) }}">
+                <div class="d-grid">
+                  <button class="btn btn-primary">
+                    <i class="fa fa-check-circle me-2"></i>Subscribe Now
+                  </button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+  {% if not recommendations %}
+    <div class="text-center py-5">
+      <i class="fa fa-lightbulb fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No recommendations available</h5>
+      <p class="text-muted">We're working on personalized recommendations for you</p>
+      <a href="{{ url_for('list_plans') }}" class="btn btn-primary">
+        <i class="fa fa-search me-2"></i>Browse All Plans
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

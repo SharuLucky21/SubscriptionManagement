@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Plans - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold">Choose Your Plan</h1>
+    <p class="lead text-muted">Select the perfect plan for your needs</p>
+  </div>
+  
+  <div class="row g-4">
+    {% for p in plans %}
+      <div class="col-md-4">
+        <div class="card pricing-card h-100 {% if loop.index == 2 %}pricing-highlight shadow-lg{% endif %}">
+          <div class="card-body p-4">
+            <div class="text-center mb-4">
+              <h3 class="fw-bold text-primary">{{ p.name }}</h3>
+              <div class="display-4 fw-bold text-dark">₹{{ p.price }}</div>
+              <p class="text-muted">per month</p>
+            </div>
+            
+            <div class="mb-4">
+              <p class="card-text text-center">{{ p.description }}</p>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><i class="fa fa-database me-2 text-primary"></i>Data Quota:</span>
+                <span class="fw-bold">
+                  {% if p.quota_gb==0 %}Unlimited{% else %}{{ p.quota_gb }} GB{% endif %}
+                </span>
+              </div>
+            </div>
+            
+            {% if user %}
+              {% if user.role == 'user' %}
+                <form method="get" action="{{ url_for('select_payment_method', plan_id=p.id) }}" id="subscribeForm{{ p.id }}">
+                  <div class="mb-3">
+                    <label for="discount_code{{ p.id }}" class="form-label small">
+                      <i class="fa fa-percentage me-1"></i>Discount Code (Optional)
+                    </label>
+                    <div class="input-group">
+                      <input type="text" class="form-control form-control-sm" id="discount_code{{ p.id }}" name="discount_code" placeholder="Enter code">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyDiscount({{ p.id }})">
+                        <i class="fa fa-check"></i>
+                      </button>
+                    </div>
+                    <div id="discountResult{{ p.id }}" class="mt-2"></div>
+                  </div>
+                  <div class="d-grid">
+                    <button class="btn {% if loop.index == 2 %}btn-primary{% else %}btn-outline-primary{% endif %} btn-lg">
+                      <i class="fa fa-credit-card me-2"></i>Select Payment Method
+                    </button>
+                  </div>
+                </form>
+              {% elif user.role == 'admin' %}
+                <div class="d-grid">
+                  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fa fa-tachometer-alt me-2"></i>Admin Dashboard
+                  </a>
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="d-grid">
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                  <i class="fa fa-sign-in-alt me-2"></i>Login to Subscribe
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+  {% if not user %}
+    <div class="text-center mt-5">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title">Ready to get started?</h5>
+          <p class="card-text">Create your account to start managing subscriptions</p>
+          <a href="{{ url_for('signup') }}" class="btn btn-success btn-lg">
+            <i class="fa fa-user-plus me-2"></i>Sign Up Free
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .pricing-card {
+    border-radius: 15px;
+    transition: transform 0.3s;
+  }
+  .pricing-card:hover {
+    transform: translateY(-10px);
+  }
+  .pricing-highlight {
+    border: 2px solid #4e73df;
+  }
+</style>
+
+<script>
+function applyDiscount(planId) {
+  const discountCode = document.getElementById('discount_code' + planId).value.trim().toUpperCase();
+  const resultDiv = document.getElementById('discountResult' + planId);
+  
+  if (!discountCode) {
+    resultDiv.innerHTML = '<small class="text-muted">Please enter a discount code</small>';
+    return;
+  }
+  
+  fetch('/apply_discount', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'discount_code=' + encodeURIComponent(discountCode) + '&plan_id=' + planId
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      resultDiv.innerHTML = `
+        <div class="alert alert-success py-2 mb-0">
+          <small>
+            <i class="fa fa-check-circle me-1"></i>
+            <strong>${data.discount_name}</strong> applied! 
+            You save ₹${data.discount_amount.toFixed(2)}. 
+            Final price: ₹${data.final_price.toFixed(2)}
+          </small>
+        </div>
+      `;
+    } else {
+      resultDiv.innerHTML = `
+        <div class="alert alert-danger py-2 mb-0">
+          <small>
+            <i class="fa fa-exclamation-circle me-1"></i>
+            ${data.message}
+          </small>
+        </div>
+      `;
+    }
+  })
+  .catch(error => {
+    resultDiv.innerHTML = `
+      <div class="alert alert-danger py-2 mb-0">
+        <small>
+          <i class="fa fa-exclamation-circle me-1"></i>
+          Error applying discount code
+        </small>
+      </div>
+    `;
+  });
+}
+</script>
+{% endblock %}

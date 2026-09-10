@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Add Payment Method - SubManage{% endblock %}
+
+{% block content %}
+<style>
+  /* Payment Cards */
+  #payment-list { max-height: 500px; overflow-y: auto; padding-right: 5px; }
+  #payment-list::-webkit-scrollbar { width: 6px; }
+  #payment-list::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 3px; }
+  .payment-card {
+    background: #fff;
+    padding: 20px 25px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .payment-card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.12); }
+  .payment-info { display: flex; align-items: center; gap: 20px; }
+  .payment-info img { width: 55px; }
+  .payment-details { display: flex; flex-direction: column; }
+  .payment-details strong { font-size: 18px; }
+  .payment-details span { font-size: 14px; color: #6b7280; }
+  /* Popup */
+  .popup {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .popup-content {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  }
+  .popup-content h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+    color: #10b981;
+  }
+  .popup-content button {
+    margin-top: 15px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .popup-content button:hover { background: #1e40af; }
+</style>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-lg border-0 mt-4">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="fa fa-plus me-2"></i>Add New Payment Method
+        </h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          <!-- ...existing form fields... -->
+          <div class="mb-3">
+            <label for="card_type" class="form-label">
+              <i class="fa fa-credit-card me-2"></i>Card Type
+            </label>
+            <select class="form-select" id="card_type" name="card_type" required>
+              <option value="">Select Payment Method</option>
+              <option value="visa">Visa</option>
+              <option value="mastercard">Mastercard</option>
+              <option value="amex">American Express</option>
+              <option value="discover">Discover</option>
+              <option value="upi">UPI</option>
+            </select>
+          </div>
+          <!-- ...rest of your form fields... -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="fa fa-save me-2"></i>Add Payment Method
+            </button>
+            <a href="{{ url_for('user_payment_methods') }}" class="btn btn-outline-secondary">
+              <i class="fa fa-arrow-left me-2"></i>Cancel
+            </a>
+          </div>
+        </form>
+        <div class="mt-4">
+          <h5 class="text-muted mb-3">Popular payment options</h5>
+          <div id="payment-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup -->
+<div class="popup" id="popup">
+  <div class="popup-content">
+    <h3>✅ Payment Completed Successfully!</h3>
+    <p>Your transaction has been confirmed.</p>
+    <button onclick="closePopup()">OK</button>
+  </div>
+</div>
+
+<script>
+// ...existing JS for form fields...
+
+// Payment card list and popup logic
+const payments = [
+  { type: 'Paytm' },
+  { type: 'Google Pay' },
+  { type: 'Visa' },
+  { type: 'Mastercard' }
+];
+
+function getCardLogo(type) {
+  switch(type.toLowerCase()) {
+    case 'visa': return 'https://img.icons8.com/color/48/000000/visa.png';
+    case 'mastercard': return 'https://img.icons8.com/color/48/000000/mastercard.png';
+    case 'paytm': return 'https://img.icons8.com/color/48/000000/paytm.png';
+    case 'google pay': return 'https://img.icons8.com/color/48/000000/google-pay-india.png';
+    default: return 'https://img.icons8.com/ios-filled/50/000000/bank-card-back-side.png';
+  }
+}
+
+function renderPayments() {
+  const list = document.getElementById('payment-list');
+  list.innerHTML = '';
+  payments.forEach((pay) => {
+    const div = document.createElement('div');
+    div.className = 'payment-card';
+    div.innerHTML = `
+      <div class="payment-info">
+        <img src="${getCardLogo(pay.type)}" alt="card">
+        <div class="payment-details">
+          <strong>${pay.type}</strong>
+          <span>Click to proceed</span>
+        </div>
+      </div>
+    `;
+    div.addEventListener('click', () => startPayment(pay.type));
+    list.appendChild(div);
+  });
+}
+
+function startPayment(type) {
+  setTimeout(() => {
+    document.getElementById('popup').style.display = 'flex';
+  }, 1500);
+}
+
+function closePopup() {
+  document.getElementById('popup').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPayments();
+  // ...existing JS for form fields...
+});
+</script>
+
+// ...existing code...
+<script>
+// ...existing JS for form fields...
+
+const payments = [
+  { type: 'Paytm' },
+  { type: 'Google Pay' },
+  { type: 'Visa' },
+  { type: 'Mastercard' }
+];
+
+function getCardLogo(type) {
+  switch(type.toLowerCase()) {
+    case 'visa': return 'https://img.icons8.com/color/48/000000/visa.png';
+    case 'mastercard': return 'https://img.icons8.com/color/48/000000/mastercard.png';
+    case 'paytm': return 'https://img.icons8.com/color/48/000000/paytm.png';
+    case 'google pay': return 'https://img.icons8.com/color/48/000000/google-pay-india.png';
+    default: return 'https://img.icons8.com/ios-filled/50/000000/bank-card-back-side.png';
+  }
+}
+
+function renderPayments() {
+  const list = document.getElementById('payment-list');
+  list.innerHTML = '';
+  payments.forEach((pay) => {
+    const div = document.createElement('div');
+    div.className = 'payment-card';
+    div.innerHTML = `
+      <div class="payment-info">
+        <img src="${getCardLogo(pay.type)}" alt="card">
+        <div class="payment-details">
+          <strong>${pay.type}</strong>
+          <span>Click to proceed</span>
+        </div>
+      </div>
+    `;
+    div.addEventListener('click', () => startPayment(pay.type));
+    list.appendChild(div);
+  });
+}
+
+function startPayment(type) {
+  setTimeout(() => {
+    document.getElementById('popup').style.display = 'flex';
+  }, 1500);
+}
+
+function closePopup() {
+  document.getElementById('popup').style.display = 'none';
+  window.location.href = "{{ url_for('user_dashboard') }}";
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPayments();
+  // ...existing JS for form fields...
+});
+</script>
+// ...existing code...
+{% endblock %}

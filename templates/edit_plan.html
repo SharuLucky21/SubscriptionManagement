@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Plan - SubManage{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-lg border-0 mt-4">
+      <div class="card-header bg-warning text-dark">
+        <h4 class="mb-0">
+          <i class="fa fa-edit me-2"></i>Edit Plan: {{ plan.name }}
+        </h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          <div class="mb-3">
+            <label for="name" class="form-label">
+              <i class="fa fa-tag me-2"></i>Plan Name
+            </label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ plan.name }}" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="quota_gb" class="form-label">
+              <i class="fa fa-database me-2"></i>Data Quota (GB)
+            </label>
+            <input type="number" class="form-control" id="quota_gb" name="quota_gb" value="{{ plan.quota_gb }}" required min="0">
+            <div class="form-text">Enter 0 for unlimited data</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="price" class="form-label">
+              <i class="fa fa-rupee-sign me-2"></i>Price (INR)
+            </label>
+            <input type="number" class="form-control" id="price" name="price" step="0.01" value="{{ plan.price }}" required min="0">
+          </div>
+          
+          <div class="mb-4">
+            <label for="description" class="form-label">
+              <i class="fa fa-align-left me-2"></i>Description
+            </label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ plan.description }}</textarea>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+              <i class="fa fa-save me-2"></i>Update Plan
+            </button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+              <i class="fa fa-arrow-left me-2"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

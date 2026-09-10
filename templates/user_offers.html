@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Special Offers - SubManage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">
+          <i class="fa fa-percentage me-2"></i>Special Offers & Discounts
+        </h2>
+        <a href="{{ url_for('list_plans') }}" class="btn btn-outline-primary">
+          <i class="fa fa-search me-2"></i>Browse Plans
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  {% if current_plan %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <h6 class="alert-heading">
+            <i class="fa fa-info-circle me-2"></i>Current Plan
+          </h6>
+          <p class="mb-0">You're currently subscribed to <strong>{{ current_plan.name }}</strong>. Some offers may not apply to your current plan.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  
+  {% if discounts %}
+    <div class="row">
+      {% for discount in discounts %}
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 border-warning">
+            <div class="card-header bg-warning text-dark">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <i class="fa fa-tag me-2"></i>{{ discount.name }}
+                </h6>
+                <span class="badge bg-success">{{ discount.code }}</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">{{ discount.description }}</p>
+              
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span><i class="fa fa-calculator me-2 text-primary"></i>Discount:</span>
+                  <span class="fw-bold text-success">
+                    {% if discount.discount_type == 'percentage' %}
+                      {{ discount.discount_value }}% OFF
+                    {% else %}
+                      ₹{{ discount.discount_value }} OFF
+                    {% endif %}
+                  </span>
+                </div>
+                
+                {% if discount.min_amount > 0 %}
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fa fa-arrow-up me-2 text-info"></i>Min. Order:</span>
+                    <span class="fw-bold">₹{{ discount.min_amount }}</span>
+                  </div>
+                {% endif %}
+                
+                {% if discount.max_discount %}
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fa fa-arrow-down me-2 text-warning"></i>Max. Discount:</span>
+                    <span class="fw-bold">₹{{ discount.max_discount }}</span>
+                  </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span><i class="fa fa-calendar me-2 text-primary"></i>Valid Until:</span>
+                  <span class="fw-bold">{{ discount.valid_until.strftime('%Y-%m-%d') }}</span>
+                </div>
+                
+                {% if discount.usage_limit %}
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-users me-2 text-info"></i>Usage:</span>
+                    <span class="fw-bold">{{ discount.used_count }}/{{ discount.usage_limit }}</span>
+                  </div>
+                  <div class="progress mt-2" style="height: 8px;">
+                    {% set usage_percent = (discount.used_count / discount.usage_limit * 100) %}
+                    <div class="progress-bar" role="progressbar" style="width: {{ usage_percent }}%"></div>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div class="alert alert-light">
+                <small>
+                  <i class="fa fa-info-circle me-1"></i>
+                  Use code <strong>{{ discount.code }}</strong> at checkout to apply this discount.
+                </small>
+              </div>
+              
+              <div class="d-grid">
+                <a href="{{ url_for('list_plans') }}" class="btn btn-warning">
+                  <i class="fa fa-shopping-cart me-2"></i>Use This Offer
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="fa fa-percentage fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No offers available right now</h5>
+      <p class="text-muted">Check back later for special discounts and promotions</p>
+      <a href="{{ url_for('list_plans') }}" class="btn btn-primary">
+        <i class="fa fa-search me-2"></i>Browse Plans
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+// Auto-refresh offers every 5 minutes
+setTimeout(function() {
+  location.reload();
+}, 300000);
+</script>
+{% endblock %}
